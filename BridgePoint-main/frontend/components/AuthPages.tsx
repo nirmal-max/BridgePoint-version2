@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setActiveWorkspaceRole, useAuth } from "@/lib/auth-context";
 import Icon, { type IconName } from "@/components/Icon";
+import VoiceRegistration, { type VoiceProfile } from "@/components/VoiceRegistration";
 
 type Role = "customer" | "worker" | "cooperative";
 const roles: [Role, string, string, IconName][] = [
@@ -253,8 +254,15 @@ export function SignUpPage() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registrationMethod, setRegistrationMethod] = useState<"choose" | "manual" | "voice">("choose");
+  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+  const acceptVoiceProfile = (profile: VoiceProfile) => {
+    setVoiceProfile(profile);
+    setForm((current) => ({ ...current, name: profile.full_name }));
+    setRegistrationMethod("manual");
+  };
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -269,6 +277,12 @@ export function SignUpPage() {
         phone: form.phone,
         password: form.password,
         role,
+        labor_category: role === "worker" ? "labor" : undefined,
+        skills: role === "worker" && voiceProfile ? [voiceProfile.primary_skill, ...voiceProfile.sub_skills] : undefined,
+        city: role === "worker" && voiceProfile ? voiceProfile.operating_location : undefined,
+        bio: role === "worker" && voiceProfile
+          ? `${voiceProfile.experience_years} years experience · Expected rate ₹${voiceProfile.expected_rate} · ${voiceProfile.availability}. Voice transcript: ${voiceProfile.transcript}`
+          : undefined,
       });
 
       if (role === "cooperative" && !registeredUser.is_admin && !registeredUser.roles?.includes("cooperative")) {
@@ -298,7 +312,16 @@ export function SignUpPage() {
         <RolePicker role={role} setRole={setRole} />
       </div>
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
+      {role === "worker" && registrationMethod === "choose" && (
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <button type="button" onClick={() => setRegistrationMethod("manual")} className="rounded-2xl border border-slate-200 p-4 text-left transition hover:border-blue-300 hover:bg-slate-50"><b className="block text-slate-900">Manual Registration</b><span className="mt-1 block text-sm text-slate-500">Enter your details and skills yourself.</span></button>
+          <button type="button" onClick={() => setRegistrationMethod("voice")} className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-left transition hover:border-blue-400"><b className="block text-blue-900">🎙 AI Voice Registration</b><span className="mt-1 block text-sm text-blue-700">Speak naturally in Tamil, Telugu, Hindi, or English.</span></button>
+        </div>
+      )}
+      {role === "worker" && registrationMethod === "voice" && <VoiceRegistration onExtract={acceptVoiceProfile} onCancel={() => setRegistrationMethod("choose")} />}
+      {(role !== "worker" || registrationMethod === "manual") && voiceProfile && <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><b>Review your extracted worker profile</b><div className="mt-3 grid gap-3 md:grid-cols-2"><label>Skill<input value={voiceProfile.primary_skill} onChange={e => setVoiceProfile(p => p ? { ...p, primary_skill: e.target.value } : p)} className="input-field mt-1 text-slate-900" /></label><label>Experience (years)<input type="number" min="0" value={voiceProfile.experience_years} onChange={e => setVoiceProfile(p => p ? { ...p, experience_years: Number(e.target.value) } : p)} className="input-field mt-1 text-slate-900" /></label><label>Location<input value={voiceProfile.operating_location} onChange={e => setVoiceProfile(p => p ? { ...p, operating_location: e.target.value } : p)} className="input-field mt-1 text-slate-900" /></label><label>Expected rate (₹)<input type="number" min="1" value={voiceProfile.expected_rate} onChange={e => setVoiceProfile(p => p ? { ...p, expected_rate: Number(e.target.value) } : p)} className="input-field mt-1 text-slate-900" /></label><label className="md:col-span-2">Availability<input value={voiceProfile.availability} onChange={e => setVoiceProfile(p => p ? { ...p, availability: e.target.value } : p)} className="input-field mt-1 text-slate-900" /></label></div><p className="mt-3 text-xs">Your account will be submitted for cooperative verification after registration.</p></div>}
+
+      {(role !== "worker" || registrationMethod === "manual") && <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block text-sm font-medium text-slate-700">
           Full Name
           <input
@@ -388,7 +411,7 @@ export function SignUpPage() {
         >
           {loading ? "Creating Account..." : "Create Account"}
         </button>
-      </form>
+      </form>}
 
       <p className="mt-8 text-center text-sm text-slate-500">
         Already have an account?{" "}

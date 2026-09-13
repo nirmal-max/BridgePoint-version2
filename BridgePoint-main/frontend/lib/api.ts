@@ -90,6 +90,22 @@ class ApiClient {
     });
   }
 
+  async voiceOnboard(audio: Blob, languageHint: string) {
+    const form = new FormData();
+    form.append(audio, audio, worker-registration.webm);
+    form.append(language_hint, languageHint);
+    const res = await fetch(`${API_BASE}/api/workers/voice-onboard`, { method: POST, body: form });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || Voice processing failed);
+    }
+    return res.json() as Promise<{ status: string; structured_profile: {
+      full_name: string; primary_skill: string; sub_skills: string[]; experience_years: number;
+      expected_rate: number; operating_location: string; availability: string; language: string;
+      transcript: string; confidence: number;
+    } }>;
+  }
+
   login(email: string, password: string) {
     return this.request<{
       access_token: string;

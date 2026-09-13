@@ -37,7 +37,7 @@ from app.models.organization import Federation, Society, CooperativeMembership
 from app.models.feature import WorkerAvailability, Certification, WelfareRecord, InsurancePolicy, Invoice, Notification, EmergencyRequest
 
 # Import routers
-from app.routers import auth, jobs, applications, reviews, favorites, payments, websocket, calls, messages, private_requests, password_reset, cooperative, organizations, features, forecasting
+from app.routers import auth, jobs, applications, reviews, favorites, payments, websocket, calls, messages, private_requests, password_reset, cooperative, organizations, features, forecasting, worker_voice
 
 # ─── Create tables ──────────────────────────────────────
 try:
@@ -84,6 +84,7 @@ app.include_router(cooperative.router)
 app.include_router(organizations.router)
 app.include_router(features.router)
 app.include_router(forecasting.router)
+app.include_router(worker_voice.router)
 
 
 # ─── Health Check ───────────────────────────────────────

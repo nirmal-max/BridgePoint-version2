@@ -41,6 +41,9 @@ APP_NAME: str = 'Bridge Point'
 APP_VERSION: str = '1.0.0'
 APP_DESCRIPTION: str = 'Micro-Employment Platform for India'
 DEBUG: bool = os.getenv('DEBUG', 'true').lower() == 'true'
+DEMO_MODE: bool = os.getenv('DEMO_MODE', 'false').lower() == 'true'
+GEMINI_API_KEY: str = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL: str = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 
 # WebRTC ICE servers
 ICE_SERVERS: list[dict] = [
